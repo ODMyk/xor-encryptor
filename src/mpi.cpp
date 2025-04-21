@@ -3,7 +3,6 @@
 #include <vector>
 #include <string>
 #include <chrono>
-#include <functional>
 #include <mpi.h>
 
 #define DEFAULT_KEY_PATH "io/key.txt"
@@ -34,24 +33,6 @@ std::vector<char> xor_encrypt_decrypt(const std::vector<char>& data, const std::
     return result;
 }
 
-template <typename Func, typename... Args>
-auto with_benchmark(Func&& func, Args&&... args) {
-    auto start = std::chrono::high_resolution_clock::now();
-
-    if constexpr (std::is_void_v<std::invoke_result_t<Func, Args...>>) {
-        std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        std::cout << BENCHMARK_BEFORE << duration.count() << BENCHMARK_AFTER << std::endl;
-    } else {
-        auto result = std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        std::cout << BENCHMARK_BEFORE << duration.count() << BENCHMARK_AFTER << std::endl;
-        return result;
-    }
-}
-
 void process(const std::vector<char>& key, const std::vector<char>& local_data, std::vector<char>& local_result) {
     local_result = xor_encrypt_decrypt(local_data, key);
 }
@@ -80,6 +61,8 @@ int main(int argc, char* argv[]) {
             data = read_file(data_path);
         }
 
+        auto start = std::chrono::high_resolution_clock::now();
+
         int key_size = 0;
         if (rank == 0) {
             key_size = key.size();
@@ -101,11 +84,7 @@ int main(int argc, char* argv[]) {
         MPI_Scatter(data.data(), chunk_size, MPI_CHAR, local_data.data(), chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
         std::vector<char> local_result;
-        if (rank == 0) {
-            with_benchmark(process, key, local_data, local_result);
-        } else {
-            process(key, local_data, local_result);
-        }
+        process(key, local_data, local_result);
 
         std::vector<char> result_data;
         if (rank == 0) {
@@ -115,6 +94,9 @@ int main(int argc, char* argv[]) {
         MPI_Gather(local_result.data(), chunk_size, MPI_CHAR, result_data.data(), chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
         if (rank == 0) {
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            std::cout << BENCHMARK_BEFORE << duration.count() << BENCHMARK_AFTER << std::endl;
             write_file(output_path, result_data);
         }
 

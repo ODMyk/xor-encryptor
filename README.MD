@@ -30,20 +30,12 @@ git clone https://github.com/ODMyk/xor-encryptor.git
 cd xor-encryptor
 ```
 
-## 🛠️ Встановлення Make (якщо потрібно)
-
-### macOS:
+## 🛠️ Встановлення Make на macOS (якщо потрібно)
 
 Make зазвичай встановлений разом із Xcode Command Line Tools. Якщо його немає:
 
 ```bash
 xcode-select --install
-```
-
-### Linux (Debian/Ubuntu):
-
-```bash
-sudo apt update && sudo apt install build-essential
 ```
 
 ## ⚙️ Компіляція
@@ -54,6 +46,35 @@ sudo apt update && sudo apt install build-essential
 make basic    # Компілює src/basic.cpp -> dist/basic
 make openmp   # Компілює src/openmp.cpp -> dist/openmp
 make mpi      # Компілює src/mpi.cpp -> dist/mpi
+```
+
+### Залежності для OpenMP
+
+Щоб зібрати OpenMP версію, необхідно встановити бібліотеку OpenMP. Для macOS це можна зробити так:
+
+```bash
+brew install libomp
+```
+
+Якщо шлях до бібліотеки відрізняється, можна вказати змінні в Makefile. Для macOS це може бути:
+
+```make
+LIBOMP_PREFIX = /opt/homebrew/opt/libomp
+OPENMP_FLAG = -Xpreprocessor -fopenmp -I$(LIBOMP_PREFIX)/include -L$(LIBOMP_PREFIX)/lib -lomp
+```
+
+Замість $(LIBOMP_PREFIX) використовуйте актуальний шлях до бібліотеки, якщо він інший. Знайти його можна наступною командою:
+
+```bash
+brew --prefix libomp
+```
+
+### Залежності для MPI
+
+Для використання MPI на macOS, зазвичай достатньо встановити бібліотеку через Homebrew:
+
+```bash
+brew install open-mpi
 ```
 
 ## ▶️ Запуск

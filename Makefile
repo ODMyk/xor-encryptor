@@ -12,8 +12,7 @@ MPI_BIN = $(OUT_DIR)/mpi
 CXX = g++
 CXXFLAGS = -std=c++17 -O2 -Wall
 
-LIBOMP_PREFIX = /opt/homebrew/opt/libomp
-OPENMP_FLAG = -Xpreprocessor -fopenmp -I$(LIBOMP_PREFIX)/include -L$(LIBOMP_PREFIX)/lib -lomp
+OPENMP_FLAG = -fopenmp
 
 MPICXX = mpic++
 

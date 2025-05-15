@@ -12,6 +12,7 @@
 #define BENCHMARK_AFTER " microseconds"
 #define ERROR_PREFIX "Error: "
 #define NO_FILE_PREFIX "Cannot open file: "
+#define MICROSECONDS_PER_SECOND 1000000
 
 std::vector<char> read_file(const std::string& path) {
     std::ifstream file(path, std::ios::binary);
@@ -61,7 +62,8 @@ int main(int argc, char* argv[]) {
             data = read_file(data_path);
         }
 
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = MPI_Wtime();
+        // auto start = std::chrono::high_resolution_clock::now();
 
         int key_size = 0;
         if (rank == 0) {
@@ -94,9 +96,11 @@ int main(int argc, char* argv[]) {
         MPI_Gather(local_result.data(), chunk_size, MPI_CHAR, result_data.data(), chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
         if (rank == 0) {
-            auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            std::cout << BENCHMARK_BEFORE << duration.count() << BENCHMARK_AFTER << std::endl;
+            auto end = MPI_Wtime();
+            // auto end = std::chrono::high_resolution_clock::now();
+            auto duration = (end - start) * MICROSECONDS_PER_SECOND;
+            // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            std::cout << BENCHMARK_BEFORE << duration << BENCHMARK_AFTER << std::endl;
             write_file(output_path, result_data);
         }
 

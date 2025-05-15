@@ -14,6 +14,7 @@
 #define BENCHMARK_AFTER " microseconds"
 #define ERROR_PREFIX "Error: "
 #define NO_FILE_PREFIX "Cannot open file: "
+#define MICROSECONDS_PER_SECOND 1000000
 
 std::vector<char> read_file(const std::string& path) {
     std::ifstream file(path, std::ios::binary);
@@ -40,18 +41,23 @@ std::vector<char> xor_encrypt_decrypt(const std::vector<char>& data, const std::
 
 template <typename Func, typename... Args>
 auto with_benchmark(Func&& func, Args&&... args) {
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
+    auto start = omp_get_wtime();
 
     if constexpr (std::is_void_v<std::invoke_result_t<Func, Args...>>) {
         std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        std::cout << BENCHMARK_BEFORE << duration.count() << BENCHMARK_AFTER << std::endl;
+        // auto end = std::chrono::high_resolution_clock::now();
+        auto end = omp_get_wtime();
+        // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto duration = (end - start) * MICROSECONDS_PER_SECOND;
+        std::cout << BENCHMARK_BEFORE << duration << BENCHMARK_AFTER << std::endl;
     } else {
         auto result = std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        std::cout << BENCHMARK_BEFORE << duration.count() << BENCHMARK_AFTER << std::endl;
+        // auto end = std::chrono::high_resolution_clock::now();
+        auto end = omp_get_wtime();
+        // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        auto duration = (end - start) * MICROSECONDS_PER_SECOND;
+        std::cout << BENCHMARK_BEFORE << duration << BENCHMARK_AFTER << std::endl;
         return result;
     }
 }
